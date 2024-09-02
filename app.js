@@ -1,33 +1,21 @@
-require('dotenv').config();
-require('express-async-errors');
+
+// app.js or server.js
 const express = require('express');
+const mongoose = require('mongoose');
+const authRoutes = require('./routes/auth');
+const jobRoutes = require('./routes/jobs');
+require('dotenv').config();
+
 const app = express();
-
-// error handler
-const notFoundMiddleware = require('./middleware/not-found');
-const errorHandlerMiddleware = require('./middleware/error-handler');
-
 app.use(express.json());
-// extra packages
 
-// routes
-app.get('/', (req, res) => {
-  res.send('jobs api');
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+
+app.use('/api/auth', authRoutes);
+app.use('/api', jobRoutes);
+
+app.listen(process.env.PORT || 3000, () => {
+    console.log('Server is running...');
 });
 
-app.use(notFoundMiddleware);
-app.use(errorHandlerMiddleware);
 
-const port = process.env.PORT || 3000;
-
-const start = async () => {
-  try {
-    app.listen(port, () =>
-      console.log(`Server is listening on port ${port}...`)
-    );
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-start();
