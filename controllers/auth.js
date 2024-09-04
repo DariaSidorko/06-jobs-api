@@ -1,32 +1,41 @@
 
 
-// controllers/authController.js
+const { StatusCodes } = require('http-status-codes')
+const { BadRequestError } = require('../errors')
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
+
 
 // Register a new user
-exports.registerUser = async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const user = await User.create({ username, password });
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+// POST api/auth/register
+const registerUser = async (req, res) => {
+    const { name, email, password } = req.body;
+    const user = await User.create({ name, email, password });
+    res.status(StatusCodes.CREATED).json({ user })
 };
 
-// Login user and return JWT token
-exports.loginUser = async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const user = await User.findOne({ username });
-        if (!user || !(await user.comparePassword(password))) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        res.json({ token });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+// Log in
+// POST api/auth/login
+const loginUser = async (req, res) => {
+    const { email, password } = req.body
+  
+    if (!email || !password) {
+      throw new BadRequestError('Please provide email and password')
     }
-};
+    const user = await User.findOne({ email })
+    if (!user) {
+      throw new UnauthenticatedError('Invalid Credentials')
+    }
+    const isPasswordCorrect = await user.comparePassword(password)
+    if (!isPasswordCorrect) {
+      throw new UnauthenticatedError('Invalid Credentials')
+    }
+
+    // compare password
+    const token = user.createJWT()
+    res.status(StatusCodes.OK).json({ user: { name: user.name }, token })
+  }
+
+  module.exports = {
+    loginUser,
+    registerUser
+  }
