@@ -1,6 +1,5 @@
 
 
-// middleware/auth.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { UnauthenticatedError } = require('../errors')
@@ -11,12 +10,10 @@ const authenticateJWT = (req, res, next) => {
     if (!token) {
         throw new UnauthenticatedError('Access Denied')
     }
-
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
             throw new UnauthenticatedError('Invalid Token')
         }
-
         req.user = user;
         next();
     });
